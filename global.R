@@ -1,12 +1,3 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(tidyverse)
 
@@ -22,6 +13,23 @@ nod_tot <- nod_tot %>% mutate('pct_od' = 0)
 # THIS WILL HELP WITH ROW SEARCH FUNCTION
 nod_tot <- nod_tot %>% mutate(typ = ifelse((indicator=='Number of Deaths'), 0,1))
 
+# GET DATA FOR NUMBER OF US_OD DEATHS
+# USE THIS HASH TO BREAK THE YEARS INTO TWELVE PARTS FOR X-AXIS
+y_m <- c('April'=4, 'August'=8, 'December'=12, 'February'=2, 'January'=2, 'July'=7, 'June'=6,
+         'March'=3, 'May'=5, 'November'=11, 'October'=10, 'September'=9)
+
+duse_plus <- duse %>% mutate( ym = year + (y_m[month]*(1/12.0)) )
+us_stats <- duse_plus %>% filter(state == 'US')
+op_us <- us_stats %>% filter( grepl('Opioids', indicator) )
+tod_ys <- us_stats %>% filter( grepl('Drug Overdose Deaths', indicator) )
+fent_us <- us_stats %>% filter( grepl('Synthetic opioids,', indicator) )
+heroin_us <- us_stats %>% filter( grepl('Heroin', indicator) )
+
+# MONTHLY PLOT POINTS OF US OD DEATHS
+ggplot(data=tod_ys, aes(x=ym, y=data.value)) +
+  geom_point(aes(group=year)) +
+  geom_smooth(method = lm, size = 1) +
+  scale_y_continuous(labels = point)
 
 searchIndexN <- function(st, yr, typ){
   idx <- which(nod_tot$state==st & nod_tot$year==yr & nod_tot$typ==typ)
